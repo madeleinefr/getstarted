@@ -99,6 +99,39 @@ public class Handler {
         }
     }
 
+    // snippet-start:[s3.java2.s3_bucket_deletion.delete_objects]
+    public static void deleteObjectsInBucket (S3Client s3, String bucket) {
+
+        try {
+            // To delete a bucket, all the objects in the bucket must be deleted first.
+            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .build();
+            ListObjectsV2Response listObjectsV2Response;
+
+            do {
+                listObjectsV2Response = s3.listObjectsV2(listObjectsV2Request);
+                for (S3Object s3Object : listObjectsV2Response.contents()) {
+                    DeleteObjectRequest request = DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Object.key())
+                            .build();
+                    s3.deleteObject(request);
+                }
+            } while (listObjectsV2Response.isTruncated());
+            // snippet-end:[s3.java2.s3_bucket_deletion.delete_objects]
+
+            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucket).build();
+            s3.deleteBucket(deleteBucketRequest);
+
+        } catch (S3Exception e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+    }
+    // snippet-end:[s3.java2.bucket_deletion.main]
+
+
 
     public static void cleanUp(S3Client s3Client, String bucketName, String keyName) {
         logger.info("Cleaning up...");
