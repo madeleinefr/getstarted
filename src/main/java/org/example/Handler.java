@@ -21,15 +21,16 @@ public class Handler {
         s3Client = DependencyFactory.s3Client();
     }
 
-    public void sendRequest() {
-        String bucket = "bucket" + System.currentTimeMillis();
-        String key = "key";
 
-        tutorialSetup(s3Client, bucket);
+    public void sendRequest() {
+        String bucket = "bucket" + System.currentTimeMillis(); //gives a unique bucketname
+        String key = "key"; //the name of the object
+
+        tutorialSetup(s3Client, bucket); //calls the tutorialSetup method
 
         logger.info("Uploading object...");
 
-        // Put a single object in the bucket, in this case the key of the Bucket retreived from the PutObjectRequest
+        // Put a single object in the bucket, in this case the key of the Bucket retrieved from the PutObjectRequest
         s3Client.putObject(PutObjectRequest.builder().bucket(bucket).key(key)
                         .build(),
                 RequestBody.fromString("Testing with the {sdk-java}"));
@@ -51,33 +52,35 @@ public class Handler {
         logger.info("Exiting...");
     }
 
+    //This method builds the S3Client which is a service client for accessing Amazon S3
     public static void createS3Client(S3Client s3Client) {
 
         ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
-        Region region = Region.US_EAST_1;
+        Region region = Region.US_EAST_1; //sets the region to us-east-1
 
-        s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(credentialsProvider)
+        s3Client = S3Client.builder() //creates a builder that can be used to configure and create a S3Client
+                .region(region) //takes in the region specified above
+                .credentialsProvider(credentialsProvider) //and the credentials specified above to access AWS
                 .build();
 
     }
 
+    //This method sets up the tutorial, e.g. creates the S3 bucket in the aws account
     public static void tutorialSetup(S3Client s3Client, String bucketName) {
         try {
-            s3Client.createBucket(CreateBucketRequest
-                    .builder()
-                    .bucket(bucketName)
+            s3Client.createBucket(CreateBucketRequest //creates a CreateBucketRequest and passes it to the s3Client to createBucket method
+                    .builder() //creates the builder which is used to create a bucket
+                    .bucket(bucketName) //provides the name for the bucket
                     .build());
             logger.info("Creating bucket: " + bucketName);
-            s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
+            s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder() //polls S3.Client.headBucket API until the desired condition BucketExists is met
                     .bucket(bucketName)
                     .build());
             logger.info(bucketName + " is ready.");
             logger.info(" ");
         } catch (S3Exception e) {
-            logger.info(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            logger.info(e.awsErrorDetails().errorMessage()); //logs the error message
+            System.exit(1);//terminates the running JVM
         }
     }
 
@@ -144,12 +147,12 @@ public class Handler {
         logger.info("Cleaning up...");
         try {
             logger.info("Deleting object: " + keyName);
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(keyName).build();
-            s3Client.deleteObject(deleteObjectRequest);
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(keyName).build(); //constructs a new DeleteObjectRequest, specifying the object in the bucket
+            s3Client.deleteObject(deleteObjectRequest); //calls the S3Client which sends a deleteObjectRequest to delete the object
             logger.info(keyName + " has been deleted.");
             logger.info("Deleting bucket: " + bucketName);
-            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build();
-            s3Client.deleteBucket(deleteBucketRequest);
+            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build(); //constructs a new DeleteObjectRequest, specifying the bucket
+            s3Client.deleteBucket(deleteBucketRequest); //calls the S3Client which sends a deleteObjectRequest to delete the bucket
             logger.info(bucketName + " has been deleted.");
             logger.info(" ");
         } catch (S3Exception e) {
@@ -166,17 +169,17 @@ public class Handler {
      */
     public static void listBucketObjects(S3Client s3Client, String bucketName) {
         try {
-            ListObjectsRequest listObjects = ListObjectsRequest
+            ListObjectsRequest listObjects = ListObjectsRequest //initializes a new instance of the ListObjectsRequest class
                     .builder()
-                    .bucket(bucketName)
+                    .bucket(bucketName) //specifies the bucketname
                     .build();
 
 
-            ListObjectsResponse res = s3Client.listObjects(listObjects);
-            List<S3Object> objects = res.contents();
-            for (S3Object myValue : objects) {
-                System.out.print("\n The name of the object is " + myValue.key());
-                System.out.print("\n The owner is " + myValue.owner());
+            ListObjectsResponse res = s3Client.listObjects(listObjects); //calls the S3 client to get list of S3Objects in the bucket and any headers returned by S3
+            List<S3Object> objects = res.contents(); //packs the contents into a List of S3Objects
+            for (S3Object myValue : objects) { //loops over each object in the list
+                System.out.print("\n The name of the object is " + myValue.key()); //prints out a string and the name of the object
+                System.out.print("\n The owner is " + myValue.owner()); //prints out a string and the owner of the object
             }
         } catch (S3Exception exception) {
             System.err.println(exception.awsErrorDetails().errorMessage());
@@ -186,17 +189,17 @@ public class Handler {
     }
 
     /*
-    Another suggested feauture:
-    Listing all the buckets of this account
+    Another suggested feature:
+    Listing all the buckets of this aws account
      */
     public static void listBuckets(S3Client s3Client) {
 
         try {
-            ListBucketsRequest listBucketsRequest = ListBucketsRequest
+            ListBucketsRequest listBucketsRequest = ListBucketsRequest //initiates a new instance of the ListBucketsRequest
                     .builder()
                     .build();
-            ListBucketsResponse listBucketsResponse = s3Client.listBuckets(listBucketsRequest);
-            listBucketsResponse.buckets().stream().forEach(x -> System.out.println("The name of the bucket is " + x.name()));
+            ListBucketsResponse listBucketsResponse = s3Client.listBuckets(listBucketsRequest); //calls the S3 client to get a list of S3 buckets and any headers or metadata returned by S3
+            listBucketsResponse.buckets().stream().forEach(x -> System.out.println("The name of the bucket is " + x.name())); //gives back a stream of bucket references and loops over each of the and prints out the name of each
         } catch (S3Exception exception) {
             System.err.println(exception.awsErrorDetails().errorMessage());
             System.exit(1);
