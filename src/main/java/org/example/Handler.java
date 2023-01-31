@@ -23,11 +23,16 @@ public class Handler {
     }
 
 
+    /**
+     * Creates bucket and object, lists them and deletes both afterwards
+     * @return no return value
+     */
+
     public void sendRequest() {
         String bucket = "bucket" + System.currentTimeMillis();
         String key = "key";
 
-        tutorialSetupS3Bucket(s3Client, bucket);
+        setupS3BucketForTutorial(s3Client, bucket);
 
         logger.info("Uploading object...");
 
@@ -53,8 +58,9 @@ public class Handler {
         logger.info("Exiting...");
     }
 
-    /*
+    /**
      * @param s3Client for the S3Client parameter
+     * @return no return value
      */
     public static void createS3Client(S3Client s3Client) {
 
@@ -68,11 +74,12 @@ public class Handler {
 
     }
 
-    /*
+    /**
      * @param s3Client for the S3Client parameter
      * @param bucketName for the bucket which will be created
+     * @return no return value
      */
-    public static void tutorialSetupS3Bucket(S3Client s3Client, String bucketName) {
+    public static void setupS3BucketForTutorial(S3Client s3Client, String bucketName) {
         try {
             s3Client.createBucket(CreateBucketRequest
                     .builder()
@@ -90,9 +97,10 @@ public class Handler {
         }
     }
 
-    /*
+    /**
      * @param s3Client for the S3Client parameter
      * @param bucketName for the bucket which will be created
+     * @return no return value
      */
     public static void createS3BucketUsingS3Waiter(S3Client s3Client, String bucketName) {
 
@@ -119,9 +127,10 @@ public class Handler {
 
     // snippet-start:[s3.java2.s3_bucket_deletion.delete_objects]
 
-    /*
-     * @param s3Client for the S3Client parameter
+    /**
+     * @param s3 for the S3Client parameter
      * @param bucket for the
+     * @return no return value
      */
     public static void deleteAllObjectsInS3Bucket(S3Client s3, String bucket) {
 
@@ -154,10 +163,12 @@ public class Handler {
     }
     // snippet-end:[s3.java2.bucket_deletion.main]
 
-    /*
+    /**
+     * Deletes the objects and the S3 bucket
      * @param s3Client for the S3Client parameter
      * @param bucketName for the S3 bucket which will be deleted
      * @param keyName for the name of the S3 object which will be deleted
+     * @return no return value
      */
     public static void cleanUpS3Tutorial(S3Client s3Client, String bucketName, String keyName) {
         logger.info("Cleaning up...");
@@ -180,9 +191,10 @@ public class Handler {
 
     }
 
-    /*
+    /**
      * @param s3Client for the S3Client parameter
      * @param bucketName for the S3 bucket the objects should be listed
+     * @return no return value
      */
     public static void listObjectsOfS3Bucket(S3Client s3Client, String bucketName) {
         try {
@@ -205,8 +217,9 @@ public class Handler {
 
     }
 
-    /*
+    /**
      * @param s3Client for the S3Client parameter
+     * @return no return value
      */
     public static void listALLS3Buckets(S3Client s3Client) {
 
