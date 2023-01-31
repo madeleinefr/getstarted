@@ -14,6 +14,7 @@ import java.util.List;
 
 
 public class Handler {
+    private static S3Waiter s3Waiter;
     private final S3Client s3Client;
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
@@ -23,10 +24,10 @@ public class Handler {
 
 
     public void sendRequest() {
-        String bucket = "bucket" + System.currentTimeMillis(); //gives a unique bucketname
-        String key = "key"; //the name of the object
+        String bucket = "bucket" + System.currentTimeMillis();
+        String key = "key";
 
-        tutorialSetup(s3Client, bucket); //calls the tutorialSetup method
+        tutorialSetupS3Bucket(s3Client, bucket);
 
         logger.info("Uploading object...");
 
@@ -38,12 +39,12 @@ public class Handler {
         logger.info("Upload complete");
         logger.info(" ");
 
-        listBuckets(s3Client);
+        listALLS3Buckets(s3Client);
         logger.info("Listed the buckets successfully");
-        listBucketObjects(s3Client, bucket);
+        listObjectsOfS3Bucket(s3Client, bucket);
         logger.info("Listed the objects and their owners of the created bucket successfully");
 
-        cleanUp(s3Client, bucket, key);
+        cleanUpS3Tutorial(s3Client, bucket, key);
 
 
         logger.info("Closing the connection to {S3}");
@@ -52,40 +53,48 @@ public class Handler {
         logger.info("Exiting...");
     }
 
-    //This method builds the S3Client which is a service client for accessing Amazon S3
+    /*
+     * @param s3Client for the S3Client parameter
+     */
     public static void createS3Client(S3Client s3Client) {
 
         ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
-        Region region = Region.US_EAST_1; //sets the region to us-east-1
+        Region region = Region.US_EAST_1;
 
-        s3Client = S3Client.builder() //creates a builder that can be used to configure and create a S3Client
-                .region(region) //takes in the region specified above
-                .credentialsProvider(credentialsProvider) //and the credentials specified above to access AWS
+        s3Client = S3Client.builder()
+                .region(region)
+                .credentialsProvider(credentialsProvider)
                 .build();
 
     }
 
-    //This method sets up the tutorial, e.g. creates the S3 bucket in the aws account
-    public static void tutorialSetup(S3Client s3Client, String bucketName) {
+    /*
+     * @param s3Client for the S3Client parameter
+     * @param bucketName for the bucket which will be created
+     */
+    public static void tutorialSetupS3Bucket(S3Client s3Client, String bucketName) {
         try {
-            s3Client.createBucket(CreateBucketRequest //creates a CreateBucketRequest and passes it to the s3Client to createBucket method
-                    .builder() //creates the builder which is used to create a bucket
-                    .bucket(bucketName) //provides the name for the bucket
+            s3Client.createBucket(CreateBucketRequest
+                    .builder()
+                    .bucket(bucketName)
                     .build());
             logger.info("Creating bucket: " + bucketName);
-            s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder() //polls S3.Client.headBucket API until the desired condition BucketExists is met
+            s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
                     .bucket(bucketName)
                     .build());
             logger.info(bucketName + " is ready.");
             logger.info(" ");
         } catch (S3Exception e) {
-            logger.info(e.awsErrorDetails().errorMessage()); //logs the error message
-            System.exit(1);//terminates the running JVM
+            logger.info(e.awsErrorDetails().errorMessage());
+            System.exit(1);
         }
     }
 
-    // Create a bucket by using a S3Waiter object
-    public static void createBucket(S3Client s3Client, String bucketName) {
+    /*
+     * @param s3Client for the S3Client parameter
+     * @param bucketName for the bucket which will be created
+     */
+    public static void createS3BucketUsingS3Waiter(S3Client s3Client, String bucketName) {
 
         try {
             S3Waiter s3Waiter = s3Client.waiter();
@@ -98,7 +107,6 @@ public class Handler {
                     .bucket(bucketName)
                     .build();
 
-            // Wait until the bucket is created and print out the response.
             WaiterResponse<HeadBucketResponse> waiterResponse = s3Waiter.waitUntilBucketExists(bucketRequestWait);
             waiterResponse.matched().response().ifPresent(System.out::println);
             System.out.println(bucketName + " is ready");
@@ -110,7 +118,12 @@ public class Handler {
     }
 
     // snippet-start:[s3.java2.s3_bucket_deletion.delete_objects]
-    public static void deleteObjectsInBucket(S3Client s3, String bucket) {
+
+    /*
+     * @param s3Client for the S3Client parameter
+     * @param bucket for the
+     */
+    public static void deleteAllObjectsInS3Bucket(S3Client s3, String bucket) {
 
         try {
             // To delete a bucket, all the objects in the bucket must be deleted first.
@@ -141,18 +154,21 @@ public class Handler {
     }
     // snippet-end:[s3.java2.bucket_deletion.main]
 
-
-    //Deletes the created bucket and objects from the aws account
-    public static void cleanUp(S3Client s3Client, String bucketName, String keyName) {
+    /*
+     * @param s3Client for the S3Client parameter
+     * @param bucketName for the S3 bucket which will be deleted
+     * @param keyName for the name of the S3 object which will be deleted
+     */
+    public static void cleanUpS3Tutorial(S3Client s3Client, String bucketName, String keyName) {
         logger.info("Cleaning up...");
         try {
             logger.info("Deleting object: " + keyName);
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(keyName).build(); //constructs a new DeleteObjectRequest, specifying the object in the bucket
-            s3Client.deleteObject(deleteObjectRequest); //calls the S3Client which sends a deleteObjectRequest to delete the object
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(keyName).build();
+            s3Client.deleteObject(deleteObjectRequest);
             logger.info(keyName + " has been deleted.");
             logger.info("Deleting bucket: " + bucketName);
-            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build(); //constructs a new DeleteObjectRequest, specifying the bucket
-            s3Client.deleteBucket(deleteBucketRequest); //calls the S3Client which sends a deleteObjectRequest to delete the bucket
+            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build();
+            s3Client.deleteBucket(deleteBucketRequest);
             logger.info(bucketName + " has been deleted.");
             logger.info(" ");
         } catch (S3Exception e) {
@@ -165,21 +181,22 @@ public class Handler {
     }
 
     /*
-    Suggested feature: lists the objects of a bucket and their owner
+     * @param s3Client for the S3Client parameter
+     * @param bucketName for the S3 bucket the objects should be listed
      */
-    public static void listBucketObjects(S3Client s3Client, String bucketName) {
+    public static void listObjectsOfS3Bucket(S3Client s3Client, String bucketName) {
         try {
-            ListObjectsRequest listObjects = ListObjectsRequest //initializes a new instance of the ListObjectsRequest class
+            ListObjectsRequest listObjects = ListObjectsRequest
                     .builder()
-                    .bucket(bucketName) //specifies the bucketname
+                    .bucket(bucketName)
                     .build();
 
 
-            ListObjectsResponse res = s3Client.listObjects(listObjects); //calls the S3 client to get list of S3Objects in the bucket and any headers returned by S3
-            List<S3Object> objects = res.contents(); //packs the contents into a List of S3Objects
-            for (S3Object myValue : objects) { //loops over each object in the list
-                System.out.print("\n The name of the object is " + myValue.key()); //prints out a string and the name of the object
-                System.out.print("\n The owner is " + myValue.owner()); //prints out a string and the owner of the object
+            ListObjectsResponse res = s3Client.listObjects(listObjects);
+            List<S3Object> objects = res.contents();
+            for (S3Object myValue : objects) {
+                System.out.print("\n The name of the object is " + myValue.key());
+                System.out.print("\n The owner is " + myValue.owner());
             }
         } catch (S3Exception exception) {
             System.err.println(exception.awsErrorDetails().errorMessage());
@@ -189,17 +206,16 @@ public class Handler {
     }
 
     /*
-    Another suggested feature:
-    Listing all the buckets of this aws account
+     * @param s3Client for the S3Client parameter
      */
-    public static void listBuckets(S3Client s3Client) {
+    public static void listALLS3Buckets(S3Client s3Client) {
 
         try {
-            ListBucketsRequest listBucketsRequest = ListBucketsRequest //initiates a new instance of the ListBucketsRequest
+            ListBucketsRequest listBucketsRequest = ListBucketsRequest
                     .builder()
                     .build();
-            ListBucketsResponse listBucketsResponse = s3Client.listBuckets(listBucketsRequest); //calls the S3 client to get a list of S3 buckets and any headers or metadata returned by S3
-            listBucketsResponse.buckets().stream().forEach(x -> System.out.println("The name of the bucket is " + x.name())); //gives back a stream of bucket references and loops over each of the and prints out the name of each
+            ListBucketsResponse listBucketsResponse = s3Client.listBuckets(listBucketsRequest);
+            listBucketsResponse.buckets().stream().forEach(x -> System.out.println("The name of the bucket is " + x.name()));
         } catch (S3Exception exception) {
             System.err.println(exception.awsErrorDetails().errorMessage());
             System.exit(1);
