@@ -120,7 +120,7 @@ public class Handler {
             System.out.println(bucketName + " is ready");
 
         } catch (S3Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
+            logger.info(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
     }
@@ -157,7 +157,7 @@ public class Handler {
             s3.deleteBucket(deleteBucketRequest);
 
         } catch (S3Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
+            logger.info(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
     }
@@ -183,7 +183,7 @@ public class Handler {
             logger.info(bucketName + " has been deleted.");
             logger.info(" ");
         } catch (S3Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
+            logger.info(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
         logger.info("Cleanup complete");
@@ -197,6 +197,7 @@ public class Handler {
      * @return no return value
      */
     public static void listObjectsOfS3Bucket(S3Client s3Client, String bucketName) {
+        logger.info("Listing all the objects in S3 bucket...");
         try {
             ListObjectsRequest listObjects = ListObjectsRequest
                     .builder()
@@ -207,13 +208,15 @@ public class Handler {
             ListObjectsResponse res = s3Client.listObjects(listObjects);
             List<S3Object> objects = res.contents();
             for (S3Object myValue : objects) {
-                System.out.print("\n The name of the object is " + myValue.key());
-                System.out.print("\n The owner is " + myValue.owner());
+                logger.info("\n The name of the object is " + myValue.key());
+                logger.info("\n The owner is " + myValue.owner());
             }
-        } catch (S3Exception exception) {
-            System.err.println(exception.awsErrorDetails().errorMessage());
+        } catch (S3Exception e) {
+            logger.info(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
+        logger.info("Listing of S3 objects complete");
+        logger.info(" ");
 
     }
 
@@ -222,17 +225,20 @@ public class Handler {
      * @return no return value
      */
     public static void listALLS3Buckets(S3Client s3Client) {
+        logger.info("Listing all the S3 buckets...");
 
         try {
             ListBucketsRequest listBucketsRequest = ListBucketsRequest
                     .builder()
                     .build();
             ListBucketsResponse listBucketsResponse = s3Client.listBuckets(listBucketsRequest);
-            listBucketsResponse.buckets().stream().forEach(x -> System.out.println("The name of the bucket is " + x.name()));
-        } catch (S3Exception exception) {
-            System.err.println(exception.awsErrorDetails().errorMessage());
+            listBucketsResponse.buckets().stream().forEach(x -> logger.info("The name of the bucket is " + x.name()));
+        } catch (S3Exception e) {
+            logger.info(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
+        logger.info("Listing of S3 buckets complete");
+        logger.info("");
     }
 }
 
